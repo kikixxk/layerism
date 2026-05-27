@@ -427,6 +427,54 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ─── CONFIRMATION MODAL ─── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 999;
+      background: rgba(28, 53, 96, 0.45);
+      backdrop-filter: blur(3px);
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal-box {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      padding: 44px 40px 36px;
+      max-width: 440px; width: 90%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(28,53,96,0.22);
+      animation: modal-in 0.25s ease;
+    }
+    @keyframes modal-in {
+      from { opacity: 0; transform: translateY(12px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0)   scale(1);    }
+    }
+    .modal-icon {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: var(--gold-t); border: 1.5px solid var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px; font-size: 22px;
+    }
+    .modal-box h4 {
+      font-family: 'Fraunces', serif; font-weight: 200;
+      font-style: italic; font-size: 22px; color: var(--navy);
+      margin-bottom: 12px;
+    }
+    .modal-box p {
+      font-size: 14px; color: var(--muted);
+      line-height: 1.75; margin-bottom: 28px;
+    }
+    .modal-close {
+      display: inline-block;
+      background: var(--navy); color: var(--white);
+      padding: 11px 32px; border-radius: var(--radius);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 11px; font-weight: 500; letter-spacing: 0.12em;
+      text-transform: uppercase; border: 1.5px solid var(--navy);
+      cursor: pointer; transition: all 0.2s ease;
+    }
+    .modal-close:hover { background: var(--gold); border-color: var(--gold); }
+
     /* ─── FOOTER ─── */
     footer {
       background: var(--navy); color: rgba(255,255,255,0.8);
@@ -711,6 +759,16 @@
     </div>
   </footer>
 
+  <!-- ─── Order Confirmation Modal ─── -->
+  <div id="confirmationModal" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="modal-icon">✓</div>
+      <h4>Order Received</h4>
+      <p>Your order request has been received. We will reach out to you shortly with order collection information, stay tuned.</p>
+      <button class="modal-close" onclick="document.getElementById('confirmationModal').classList.remove('open')">Got it</button>
+    </div>
+  </div>
+
   <script>
     // =========================================================
     //  CONFIGURATION
@@ -921,8 +979,8 @@
         const res  = await fetch(CONFIG.APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
         const data = await res.json();
         if (data.success) {
-          showStatus('success', '✓ Order received! We\'ll be in touch within one business day.');
           resetForm();
+          document.getElementById('confirmationModal').classList.add('open');
         } else { throw new Error(data.error || 'Server error'); }
       } catch (err) {
         showStatus('error', 'Something went wrong. Please try again, or reach out via WhatsApp.');
