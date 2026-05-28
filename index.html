@@ -12,7 +12,7 @@
 
     :root {
       /* — Core palette drawn from the logo — */
-      --bg:       #EEEAE2;h
+      --bg:       #EEEAE2;
       --bg-card:  #E5E1D8;
       --white:    #FDFCF9;
       --navy:     #1C3560;   /* logo text / dark blue layer */
@@ -661,7 +661,7 @@
 
             <!-- Payment proof -->
             <div class="form-group">
-              <label>Proof of payment</label>
+              <label>Proof of payment *</label>
               <div class="upload-area" id="upload-area">
                 <input type="file" id="f-payment-file" accept="image/*,.pdf">
                 <div class="upload-icon">📎</div>
@@ -936,6 +936,10 @@
         showStatus('error', 'Please fill in all required fields: name, email, product, and colour.');
         return;
       }
+      if (!fileInput.files[0]) {
+        showStatus('error', 'Please attach your proof of payment before submitting.');
+        return;
+      }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         showStatus('error', 'Please enter a valid email address.');
         return;
@@ -1013,19 +1017,5 @@
       fileInput.value = ''; filePreview.classList.remove('show');
     }
   </script>
-  <style>
-    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;}
-    .modal-overlay.open{display:flex;}
-    .modal-card{background:#FDFCF9;border-radius:12px;padding:40px 36px;max-width:440px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.18);}
-    .modal-card p{font-size:1rem;line-height:1.6;color:#1C3560;margin:0 0 24px;font-family:'Plus Jakarta Sans',sans-serif;}
-    .modal-close-btn{background:#1C3560;color:#fff;border:none;border-radius:6px;padding:12px 32px;font-size:0.95rem;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;letter-spacing:0.04em;}
-    .modal-close-btn:hover{background:#C49A35;}
-    </style>
-<div id="confirmationModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-      <div class="modal-card">
-            <p id="modal-title">Your order request has been received. We will reach out to you shortly with order collection information, stay tuned.</p>
-            <button class="modal-close-btn" onclick="document.getElementById('confirmationModal').classList.remove('open')">Got it</button>
-      </div>
-  </div>
 </body>
 </html>
