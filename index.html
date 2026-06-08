@@ -598,7 +598,7 @@
   <section id="order">
     <div class="label">Place an order</div>
     <h2 class="section-title">Let's make something</h2>
-    <p class="section-sub">Choose a product, customise it, and we'll be in touch with a quote within one business day.</p>
+    <p class="section-sub">Choose a product, customise it, and we'll be in touch with a quote within three business days. For any custom requests and commissions, email layerism3d@gmail.com for a quote! </p>
 
     <div class="order-grid">
 
@@ -623,7 +623,7 @@
                 <input type="email" id="f-email" placeholder="you@example.com" autocomplete="email">
               </div>
               <div class="form-group">
-                <label>WhatsApp number</label>
+                <label>WhatsApp number *</label>
                 <input type="tel" id="f-phone" placeholder="+65 9123 4567" autocomplete="tel">
               </div>
             </div>
@@ -647,7 +647,7 @@
                 </select>
               </div>
               <div class="form-group">
-                <label>Quantity</label>
+                <label>Quantity *</label>
                 <input type="number" id="f-quantity" value="1" min="1" placeholder="1">
               </div>
             </div>
@@ -784,24 +784,27 @@
     // =========================================================
     //  PRODUCTS — edit this list to add / remove / reprice items
     // =========================================================
-    // price: a number shows "From S$X" — set to null for "Price on enquiry"
+    // price  : a number shows "From S$X" — set to null for "Price on enquiry"
+    // colors : array of available filament colours for this product.
+    //          Leave as [] to show ALL_COLORS (the full fallback list below).
+    //          List only the colours you want to offer for that product.
     const PRODUCTS = [
-      { name: 'Select a product…',             price: null, placeholder: true },
+      { name: 'Select a product…',           price: null, placeholder: true, colors: [] },
       // ── Add your products below ──
-      { name: 'TCG Phone 8 pieces Slab stand',             price: 8   },
-      { name: 'Pokeball Slab stand',    price: 20   },
-      { name: 'Pikachu Slab stand',	price: 15   },
-      { name: 'Custom nameplate / signage',     price: null },
-      { name: 'Miniature figurine',             price: null },
-      { name: 'Prototype / custom design',      price: null },
+      { name: '3x TCG Card Display Risers (17.4x8.4cm)', price: 8,   colors: ['Black', 'Dark Blue', 'White'] },
+      { name: 'Card photography and inventorizer', price: 28,  colors: ['Red, White & Black'] },
+      { name: 'Pokeball Slab stand',           price: 28,  colors: ['Red, White & Black'] },
+      { name: 'Pikachu Slab stand',            price: 15,  colors: ['Pikachu yellow'] },
+      { name: 'Custom nameplate / signage',    price: null, colors: [] },
+
       // ── Add more products here ──
     ];
 
     // =========================================================
-    //  FILAMENT COLOURS — edit this list to add / remove colours
+    //  ALL COLORS — fallback list shown when a product has colors: []
+    //  Also edit individual product colors arrays above per-product.
     // =========================================================
-    const FILAMENT_COLORS = [
-      'Select a colour…',
+    const ALL_COLORS = [
       // — Neutrals —
       'Matte Black',
       'Matte White',
@@ -839,32 +842,53 @@
     }
 
     function onProductChange(sel) {
-      const product  = PRODUCTS.find(p => p.name === sel.value);
-      const hint     = document.getElementById('price-hint');
-      if (!product || product.placeholder) { hint.classList.remove('show'); return; }
-      hint.textContent = product.price !== null
-        ? `Indicative price: from S$${product.price} · Final quote sent before payment`
-        : 'Price on enquiry — we\'ll send a quote within one business day';
-      hint.classList.add('show');
+      const product = PRODUCTS.find(p => p.name === sel.value);
+      const hint    = document.getElementById('price-hint');
+
+      // — Price hint —
+      if (!product || product.placeholder) {
+        hint.classList.remove('show');
+      } else {
+        hint.textContent = product.price !== null
+          ? `Indicative price: from S$${product.price} · Final quote sent before payment`
+          : 'Price on enquiry — we\'ll send a quote within three business days. (just send a blank picture for payment)';
+        hint.classList.add('show');
+      }
+
+      // — Rebuild colour dropdown for the selected product —
+      const colorList = (product && !product.placeholder && product.colors && product.colors.length > 0)
+        ? product.colors   // use product-specific colours
+        : ALL_COLORS;      // fall back to full list
+
+      buildColorSelect(colorList);
     }
 
     // =========================================================
     //  Build colour dropdown
+    //  Pass an array of colour strings; the placeholder is added automatically.
     // =========================================================
-    function buildColorSelect() {
+    function buildColorSelect(colors) {
       const sel = document.getElementById('f-color');
-      FILAMENT_COLORS.forEach((c, i) => {
+      sel.innerHTML = ''; // clear existing options
+
+      // Placeholder option
+      const placeholder = document.createElement('option');
+      placeholder.value    = '';
+      placeholder.disabled = true;
+      placeholder.selected = true;
+      placeholder.textContent = 'Select a colour…';
+      sel.appendChild(placeholder);
+
+      colors.forEach(c => {
         const opt = document.createElement('option');
-        opt.value    = i === 0 ? '' : c;
-        opt.disabled = i === 0;
-        opt.selected = i === 0;
+        opt.value       = c;
         opt.textContent = c;
         sel.appendChild(opt);
       });
     }
 
     buildProductSelect();
-    buildColorSelect();
+    buildColorSelect(ALL_COLORS); // show full list until a product is chosen
 
     // =========================================================
     //  Portfolio
@@ -927,17 +951,15 @@
       const btn      = document.getElementById('submit-btn');
       const statusEl = document.getElementById('form-status');
 
-      const name    = document.getElementById('f-name').value.trim();
-      const email   = document.getElementById('f-email').value.trim();
-      const product = document.getElementById('f-product').value;
-      const color   = document.getElementById('f-color').value;
+      const name     = document.getElementById('f-name').value.trim();
+      const email    = document.getElementById('f-email').value.trim();
+      const phone    = document.getElementById('f-phone').value.trim();
+      const product  = document.getElementById('f-product').value;
+      const color    = document.getElementById('f-color').value;
+      const quantity = document.getElementById('f-quantity').value;
 
-      if (!name || !email || !product || !color) {
-        showStatus('error', 'Please fill in all required fields: name, email, product, and colour.');
-        return;
-      }
-      if (!fileInput.files[0]) {
-        showStatus('error', 'Please attach your proof of payment before submitting.');
+      if (!name || !email || !phone || !product || !color || !quantity) {
+        showStatus('error', 'Please fill in all required fields: name, email, WhatsApp number, product, colour, and quantity.');
         return;
       }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -946,6 +968,10 @@
       }
       if (CONFIG.APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') {
         showStatus('error', 'Setup incomplete: add your Google Apps Script URL to the CONFIG section.');
+        return;
+      }
+      if (!fileInput.files[0]) {
+        showStatus('error', 'Please attach your proof of payment before submitting.');
         return;
       }
 
@@ -1012,8 +1038,8 @@
       ['f-name','f-email','f-phone','f-notes'].forEach(id => document.getElementById(id).value = '');
       document.getElementById('f-quantity').value = '1';
       document.getElementById('f-product').selectedIndex = 0;
-      document.getElementById('f-color').selectedIndex   = 0;
       document.getElementById('price-hint').classList.remove('show');
+      buildColorSelect(ALL_COLORS); // reset colour list to full fallback
       fileInput.value = ''; filePreview.classList.remove('show');
     }
   </script>
