@@ -910,15 +910,16 @@
     //  Portfolio
     // =========================================================
     // To add an image from Google Drive:
-    //   1. Upload to Drive → Share → Anyone with the link → copy link
+    //   1. Upload to Drive → Share → "Anyone with the link" → copy link
     //   2. Get the File ID from the URL (the string between /d/ and /view)
-    //   3. Use: https://drive.google.com/thumbnail?id=FILE_ID&sz=w600
+    //   3. Use: https://drive.google.com/thumbnail?id=FILE_ID&sz=w800
+    //   (thumbnail URL works on all devices without auth; lh3.googleusercontent.com/d/ requires a Google login cookie)
     const PORTFOLIO_ITEMS = [
-  { src: 'https://lh3.googleusercontent.com/d/1rlneMgfnOWzNSQN_yqgV-KX-10rPhPWn',
+  { src: 'https://drive.google.com/thumbnail?id=1rlneMgfnOWzNSQN_yqgV-KX-10rPhPWn&sz=w800',
     title: '3x TCG Card Display Risers (17.4x8.4cm)', category: 'TCG accessories' },
-  { src: 'https://lh3.googleusercontent.com/d/1rbZhwm7JkSR7FnO3eNh2y5bnn0NWtqHu',
+  { src: 'https://drive.google.com/thumbnail?id=1rbZhwm7JkSR7FnO3eNh2y5bnn0NWtqHu&sz=w800',
     title: 'Toploader storage box with sliding top', category: 'TCG accessories' },
-  { src: 'https://lh3.googleusercontent.com/d/1cpfSVXn2H3x_gqnhaC_9_YDf2JYIEtXn',
+  { src: 'https://drive.google.com/thumbnail?id=1cpfSVXn2H3x_gqnhaC_9_YDf2JYIEtXn&sz=w800',
     title: 'Card photography and inventorizer', category: 'TCG accessories' },
     ];
 
@@ -934,7 +935,13 @@
       }
       grid.innerHTML = PORTFOLIO_ITEMS.map(item => `
         <div class="portfolio-item">
-          <img src="${item.src}" alt="${item.title}" loading="lazy">
+          <img
+            src="${item.src}"
+            alt="${item.title}"
+            loading="lazy"
+            referrerpolicy="no-referrer"
+            onerror="this.onerror=null;this.src='';this.closest('.portfolio-item').classList.add('img-error');"
+          >
           <div class="portfolio-overlay">
             <div class="portfolio-caption">
               ${item.title}<small>${item.category}</small>
