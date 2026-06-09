@@ -915,11 +915,11 @@
     //   3. Use: https://drive.google.com/thumbnail?id=FILE_ID&sz=w800
     //   (thumbnail URL works on all devices without auth; lh3.googleusercontent.com/d/ requires a Google login cookie)
     const PORTFOLIO_ITEMS = [
-  { src: 'https://drive.google.com/thumbnail?id=1D6alsN9bq2zIG3w3QjV0zfzzGBftVY59&sz=w800',
+  { src: 'https://lh3.googleusercontent.com/d/1D6alsN9bq2zIG3w3QjV0zfzzGBftVY59',
     title: '3x TCG Card Display Risers (17.4x8.4cm)', category: 'TCG accessories' },
-  { src: 'https://drive.google.com/thumbnail?id=1rbZhwm7JkSR7FnO3eNh2y5bnn0NWtqHu&sz=w800',
+  { src: 'https://lh3.googleusercontent.com/d/1rbZhwm7JkSR7FnO3eNh2y5bnn0NWtqHu',
     title: 'Toploader storage box with sliding top', category: 'TCG accessories' },
-  { src: 'https://drive.google.com/thumbnail?id=1i5BIM4rLe6zI67RP6yLlQFFxRLWPigRr&sz=w800',
+  { src: 'https://lh3.googleusercontent.com/d/1i5BIM4rLe6zI67RP6yLlQFFxRLWPigRr',
     title: 'Card photography and inventorizer', category: 'TCG accessories' },
     ];
 
@@ -933,21 +933,41 @@
           </div>`;
         return;
       }
-      grid.innerHTML = PORTFOLIO_ITEMS.map(item => `
+      grid.innerHTML = PORTFOLIO_ITEMS.map(item => {
+        // Extract Drive file ID from lh3 URL so we can build a fallback
+        const lh3Match = item.src.match(/lh3\.googleusercontent\.com\/d\/([A-Za-z0-9_-]+)/);
+        const fallbackSrc = lh3Match
+          ? `https://drive.google.com/thumbnail?id=${lh3Match[1]}&sz=w800`
+          : '';
+        const fallback2Src = lh3Match
+          ? `https://drive.google.com/uc?export=view&id=${lh3Match[1]}`
+          : '';
+        return `
         <div class="portfolio-item">
           <img
             src="${item.src}"
             alt="${item.title}"
             loading="lazy"
             referrerpolicy="no-referrer"
-            onerror="this.onerror=null;this.src='';this.closest('.portfolio-item').classList.add('img-error');"
+            onerror="
+              if(this.dataset.attempt==='0'||!this.dataset.attempt){
+                this.dataset.attempt='1';
+                this.src='${fallbackSrc}';
+              } else if(this.dataset.attempt==='1'){
+                this.dataset.attempt='2';
+                this.src='${fallback2Src}';
+              } else {
+                this.onerror=null;
+                this.closest('.portfolio-item').classList.add('img-error');
+              }"
           >
           <div class="portfolio-overlay">
             <div class="portfolio-caption">
               ${item.title}<small>${item.category}</small>
             </div>
           </div>
-        </div>`).join('');
+        </div>`;
+      }).join('');
     }
     renderPortfolio();
 
