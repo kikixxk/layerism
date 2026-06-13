@@ -233,6 +233,62 @@
     }
     .portfolio-empty p:first-child { font-size: 14px; font-weight: 500; color: var(--navy); margin-bottom: 6px; }
     .portfolio-empty p:last-child { font-size: 12px; }
+    .portfolio-badge {
+      position: absolute; top: 10px; right: 10px;
+      background: rgba(28,53,96,0.85); color: #fff;
+      font-size: 12px; font-weight: 600;
+      padding: 3px 9px; border-radius: 999px;
+      pointer-events: none;
+    }
+
+    /* ─── LIGHTBOX ─── */
+    .lightbox-overlay {
+      position: fixed; inset: 0; background: rgba(15,23,42,0.85);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000; opacity: 0; visibility: hidden;
+      transition: opacity 0.25s; padding: 24px;
+    }
+    .lightbox-overlay.open { opacity: 1; visibility: visible; }
+    .lightbox-box {
+      background: var(--bg-card); border-radius: var(--radius-lg);
+      max-width: 720px; width: 100%; max-height: 90vh;
+      overflow: hidden; display: flex; flex-direction: column;
+      position: relative;
+    }
+    .lightbox-img-wrap {
+      position: relative; background: #000;
+      display: flex; align-items: center; justify-content: center;
+      max-height: 60vh;
+    }
+    .lightbox-img-wrap img {
+      max-width: 100%; max-height: 60vh; object-fit: contain; display: block;
+    }
+    .lightbox-nav {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      background: rgba(0,0,0,0.45); color: #fff; border: none;
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 18px; transition: background 0.2s;
+    }
+    .lightbox-nav:hover { background: rgba(0,0,0,0.7); }
+    .lightbox-prev { left: 12px; }
+    .lightbox-next { right: 12px; }
+    .lightbox-close {
+      position: absolute; top: 12px; right: 12px;
+      background: rgba(0,0,0,0.45); color: #fff; border: none;
+      width: 34px; height: 34px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 18px; z-index: 2; transition: background 0.2s;
+    }
+    .lightbox-close:hover { background: rgba(0,0,0,0.7); }
+    .lightbox-info { padding: 18px 22px; }
+    .lightbox-info h3 {
+      font-size: 16px; font-weight: 600; color: var(--navy); margin-bottom: 6px;
+    }
+    .lightbox-info p {
+      font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 8px;
+    }
+    .lightbox-counter { font-size: 12px; color: var(--muted); }
 
     /* ─── STEPS ─── */
     .steps {
@@ -668,6 +724,22 @@
     <div class="portfolio-grid" id="portfolio-grid"></div>
   </section>
 
+  <div class="lightbox-overlay" id="lightbox-overlay">
+    <div class="lightbox-box">
+      <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+      <div class="lightbox-img-wrap">
+        <button class="lightbox-nav lightbox-prev" id="lightbox-prev" onclick="lightboxNav(-1)">‹</button>
+        <img id="lightbox-img" src="" alt="">
+        <button class="lightbox-nav lightbox-next" id="lightbox-next" onclick="lightboxNav(1)">›</button>
+      </div>
+      <div class="lightbox-info">
+        <h3 id="lightbox-title"></h3>
+        <p id="lightbox-desc"></p>
+        <div class="lightbox-counter" id="lightbox-counter"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ─── HOW IT WORKS ─── -->
   <section id="how-it-works" style="padding-top:0;">
     <div class="label">Process</div>
@@ -1062,13 +1134,31 @@
     //   3. Use: https://drive.google.com/thumbnail?id=FILE_ID&sz=w800
     //   (thumbnail URL works on all devices without auth; lh3.googleusercontent.com/d/ requires a Google login cookie)
     const PORTFOLIO_ITEMS = [
-  { src: 'https://lh3.googleusercontent.com/d/1D6alsN9bq2zIG3w3QjV0zfzzGBftVY59',
-    title: '3x TCG Card Display Risers (17.4x8.4cm)', category: 'TCG accessories' },
-  { src: 'https://lh3.googleusercontent.com/d/1rbZhwm7JkSR7FnO3eNh2y5bnn0NWtqHu',
-    title: 'Toploader storage box with sliding top', category: 'TCG accessories' },
-  { src: 'https://lh3.googleusercontent.com/d/1i5BIM4rLe6zI67RP6yLlQFFxRLWPigRr',
-    title: 'Card photography and inventorizer', category: 'TCG accessories' },
+  { title: '3x TCG Card Display Risers (17.4x8.4cm)', category: 'TCG accessories',
+    images: [
+      { src: 'https://lh3.googleusercontent.com/d/1D6alsN9bq2zIG3w3QjV0zfzzGBftVY59', description: '' }
+    ] },
+  { title: 'Toploader storage box with sliding top', category: 'TCG accessories',
+    images: [
+      { src: 'https://lh3.googleusercontent.com/d/1rbZhwm7JkSR7FnO3eNh2y5bnn0NWtqHu', description: '' }
+    ] },
+  { title: 'Card photography and inventorizer', category: 'TCG accessories',
+    images: [
+      { src: 'https://lh3.googleusercontent.com/d/1i5BIM4rLe6zI67RP6yLlQFFxRLWPigRr', description: '' }
+    ] },
     ];
+
+    // Build src/fallback chain for a Drive lh3 URL
+    function buildImgAttrs(src) {
+      const lh3Match = src.match(/lh3\.googleusercontent\.com\/d\/([A-Za-z0-9_-]+)/);
+      const fallbackSrc = lh3Match
+        ? `https://drive.google.com/thumbnail?id=${lh3Match[1]}&sz=w800`
+        : '';
+      const fallback2Src = lh3Match
+        ? `https://drive.google.com/uc?export=view&id=${lh3Match[1]}`
+        : '';
+      return { fallbackSrc, fallback2Src };
+    }
 
     function renderPortfolio() {
       const grid = document.getElementById('portfolio-grid');
@@ -1080,19 +1170,16 @@
           </div>`;
         return;
       }
-      grid.innerHTML = PORTFOLIO_ITEMS.map(item => {
-        // Extract Drive file ID from lh3 URL so we can build a fallback
-        const lh3Match = item.src.match(/lh3\.googleusercontent\.com\/d\/([A-Za-z0-9_-]+)/);
-        const fallbackSrc = lh3Match
-          ? `https://drive.google.com/thumbnail?id=${lh3Match[1]}&sz=w800`
-          : '';
-        const fallback2Src = lh3Match
-          ? `https://drive.google.com/uc?export=view&id=${lh3Match[1]}`
+      grid.innerHTML = PORTFOLIO_ITEMS.map((item, idx) => {
+        const cover = item.images[0];
+        const { fallbackSrc, fallback2Src } = buildImgAttrs(cover.src);
+        const badge = item.images.length > 1
+          ? `<div class="portfolio-badge">+${item.images.length - 1}</div>`
           : '';
         return `
-        <div class="portfolio-item">
+        <div class="portfolio-item" onclick="openLightbox(${idx})">
           <img
-            src="${item.src}"
+            src="${cover.src}"
             alt="${item.title}"
             loading="lazy"
             referrerpolicy="no-referrer"
@@ -1108,6 +1195,7 @@
                 this.closest('.portfolio-item').classList.add('img-error');
               }"
           >
+          ${badge}
           <div class="portfolio-overlay">
             <div class="portfolio-caption">
               ${item.title}<small>${item.category}</small>
@@ -1117,6 +1205,71 @@
       }).join('');
     }
     renderPortfolio();
+
+    // =========================================================
+    //  Lightbox
+    // =========================================================
+    let lightboxItemIdx = 0;
+    let lightboxImageIdx = 0;
+
+    function openLightbox(itemIdx) {
+      lightboxItemIdx = itemIdx;
+      lightboxImageIdx = 0;
+      renderLightbox();
+      document.getElementById('lightbox-overlay').classList.add('open');
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox-overlay').classList.remove('open');
+    }
+
+    function lightboxNav(dir) {
+      const item = PORTFOLIO_ITEMS[lightboxItemIdx];
+      const len = item.images.length;
+      lightboxImageIdx = (lightboxImageIdx + dir + len) % len;
+      renderLightbox();
+    }
+
+    function renderLightbox() {
+      const item = PORTFOLIO_ITEMS[lightboxItemIdx];
+      const img = item.images[lightboxImageIdx];
+      const { fallbackSrc, fallback2Src } = buildImgAttrs(img.src);
+
+      document.getElementById('lightbox-title').textContent = item.title;
+      const descEl = document.getElementById('lightbox-desc');
+      descEl.textContent = img.description || '';
+      descEl.style.display = img.description ? 'block' : 'none';
+
+      const imgEl = document.getElementById('lightbox-img');
+      imgEl.removeAttribute('data-attempt');
+      imgEl.src = img.src;
+      imgEl.alt = item.title;
+      imgEl.onerror = function() {
+        if (this.dataset.attempt === '0' || !this.dataset.attempt) {
+          this.dataset.attempt = '1';
+          this.src = fallbackSrc;
+        } else if (this.dataset.attempt === '1') {
+          this.dataset.attempt = '2';
+          this.src = fallback2Src;
+        }
+      };
+
+      const nav = item.images.length > 1;
+      document.getElementById('lightbox-prev').style.display = nav ? 'flex' : 'none';
+      document.getElementById('lightbox-next').style.display = nav ? 'flex' : 'none';
+      document.getElementById('lightbox-counter').style.display = nav ? 'block' : 'none';
+      document.getElementById('lightbox-counter').textContent = `${lightboxImageIdx + 1} / ${item.images.length}`;
+    }
+
+    document.getElementById('lightbox-overlay').addEventListener('click', function(e) {
+      if (e.target === this) closeLightbox();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (!document.getElementById('lightbox-overlay').classList.contains('open')) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') lightboxNav(-1);
+      if (e.key === 'ArrowRight') lightboxNav(1);
+    });
 
     // =========================================================
     //  File upload UI
